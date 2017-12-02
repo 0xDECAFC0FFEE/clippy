@@ -16,16 +16,15 @@ def start_server():
     # starting server
     FNULL = open(os.devnull, 'w')
     cmd = ['/usr/bin/python', "dictionary_service_server.py"]
-    server = subprocess.Popen(cmd, stdout=FNULL, stderr=pipeout, close_fds=False)
+    server = subprocess.Popen(
+        cmd, stdout=FNULL, stderr=pipeout, close_fds=False, bufsize=5)
     
-    # waiting for server to become ready
+    # client waiting for server to become ready
     input = os.read(pipein, 5)
-    
 
 def get_definitions(words):
     # Create socket
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    # pidprint("connection opened")
 
     try:
         # trying to connect to server
@@ -35,25 +34,21 @@ def get_definitions(words):
         start_server()
         sock.connect(server_address)
 
-    # wrapping everything in a try except just to make sure socket is closed
-    pidprint("communicating with server to get definitions")
+    # communicating with server to get definitions
+    # wrapping everything in a try except just to make sure socket is closed at the end
     words_dictionary = []
     try:
         for word in words:
-            # pidprint("client sending server %s" % word)
+            # sending server words and recieving definition
             sock.sendall(word[:200].ljust(200, " "))
             definition = sock.recv(200)
             words_dictionary.append((word, definition))
 
+        # closing connection to server
         sock.sendall(" "*200)
 
-    except:
-        pass
     finally:
         sock.close()
-        pidprint("connection closed")
-
-    pidprint("definitions recieved")
 
     return words_dictionary
 

@@ -2,6 +2,7 @@ import os
 import signal
 import threading
 
+# stolen from https://stackoverflow.com/questions/29604205/make-python-script-exit-after-x-seconds-of-inactivity
 
 class Watchdog():
     def __init__(self, timeout=10):
@@ -9,7 +10,6 @@ class Watchdog():
         self._t = None
 
     def do_expire(self):
-        os.system('say "server killed"')
         os.kill(os.getpid(), signal.SIGTERM)
 
     def _expire(self):

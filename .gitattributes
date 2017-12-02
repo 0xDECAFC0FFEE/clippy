@@ -1,0 +1,1 @@
+ipa_to_words.txt filter=lfs diff=lfs merge=lfs -text

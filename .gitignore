@@ -1,0 +1,7 @@
+*.pyc
+__pycache__
+.vscode
+.git
+info.plist
+.vscode
+__pycache__

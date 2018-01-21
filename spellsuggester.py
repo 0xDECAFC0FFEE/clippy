@@ -3,16 +3,12 @@ from jellyfish import damerau_levenshtein_distance
 from dictionary_service_client import get_definitions
 import json
 from sys import argv
-import webbrowser
 import dbm
 
 # input to program from alfred
 if len(argv) == 1:
     exit(0)
 incorrectly_spelled_word = str(argv[1]).lower()
-
-if incorrectly_spelled_word in ["paperclip", "clip", "clippy", "clippit", "paper clip"]:
-    webbrowser.open("http://www.decisionproblem.com/paperclips/", new=2, autoraise=False)
 
 # getting all metaphonemes of word
 metaphonemes = []

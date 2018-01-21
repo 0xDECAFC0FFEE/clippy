@@ -8,3 +8,4 @@ Usage
 - `sp <query>` - prompts snippy to provide word suggestions
     - `↩` - copies word onto clipboard and frontmost application
     - `⌘+C` - copies word onto clipboard
+    - `⇧` - opens word in osx dictionary

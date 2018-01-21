@@ -2,10 +2,11 @@
 
 import time
 import socket
-import sys
+from sys import argv
 import os
 import subprocess
 import random
+from config import MAX_DEF_LEN
 
 server_address = './Alfred_Dictionary_Socket'
 
@@ -20,9 +21,10 @@ def start_server():
         cmd, stdout=FNULL, stderr=pipeout, close_fds=False, bufsize=5)
     
     # client waiting for server to become ready
-    input = os.read(pipein, 5)
+    input = os.read(pipein, 6)
 
 def get_definitions(words):
+
     # Create socket
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 
@@ -40,12 +42,12 @@ def get_definitions(words):
     try:
         for word in words:
             # sending server words and recieving definition
-            sock.sendall(word[:200].ljust(200, " "))
-            definition = sock.recv(200)
+            sock.sendall(word[:MAX_DEF_LEN].ljust(MAX_DEF_LEN, " ").encode())
+            definition = sock.recv(MAX_DEF_LEN).strip().decode("utf-8", "ignore") # ignoring decode errors cause the last couple code points could have been truncated
             words_dictionary.append((word, definition))
 
         # closing connection to server
-        sock.sendall(" "*200)
+        sock.sendall(b" " * MAX_DEF_LEN)
 
     finally:
         sock.close()
@@ -54,5 +56,9 @@ def get_definitions(words):
 
 
 if __name__ == "__main__":
-    words = [b'frank', b'cool', b'cruel', b'poo', b'dana', b'red', b'reddit']
+    if len(argv) == 1:
+        words = [b'frank', b'cool', b'cruel', b'poo', b'dana', b'red', b'reddit']
+    else:
+        words = argv[1:]
+        words = [word.decode("utf-8") for word in words]
     print(get_definitions(words))

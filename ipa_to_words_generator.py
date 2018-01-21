@@ -1,6 +1,7 @@
 from metaphone import doublemetaphone
 from DictionaryServices import *
 from collections import defaultdict
+from tqdm import tqdm
 import dbm
 
 print("retrieving words")
@@ -11,7 +12,7 @@ with open("words.txt", "r") as readFile:
 
 print("filtering out words not in osx dictionary")
 new_oxford_american_dictionary_words = []
-for osx_word in osx_words:
+for osx_word in tqdm(osx_words):
     wordrange = (0, len(osx_word))
     dictresult = DCSCopyTextDefinition(None, osx_word, wordrange)
     if dictresult:
@@ -19,12 +20,12 @@ for osx_word in osx_words:
 
 print("transposing dictionary")
 ipa_to_words = defaultdict(lambda: [])
-for word in new_oxford_american_dictionary_words:
+for word in tqdm(new_oxford_american_dictionary_words):
     for ipa in doublemetaphone(word):
         if ipa != "":
             ipa_to_words[ipa].append(word)
 
-print("adding words to on database")
+print("adding words to database")
 with dbm.ndbm.open("ipa_to_words", "n") as database:
     for word, ipas in ipa_to_words.items():
         database[word] = " ".join(ipas)

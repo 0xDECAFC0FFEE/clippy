@@ -58,7 +58,7 @@ while True:
             definition = definition[:MAX_DEF_LEN].ljust(MAX_DEF_LEN, " ")
 
             # sending definition to client
-            sys.stderr.write("sending definition %s.\n" % definition)
+            sys.stderr.write("sending definition %s\n" % definition)
             connection.sendall(definition)
     except Exception as e:
         print(e)

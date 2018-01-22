@@ -1,6 +1,7 @@
 from metaphone import doublemetaphone
 from jellyfish import damerau_levenshtein_distance
 from dictionary_service_client import get_definitions
+from config import highlight_correctly_spelled_output
 import json
 from sys import argv
 import dbm
@@ -20,7 +21,10 @@ for metaphoneme in doublemetaphone(incorrectly_spelled_word):
 words = []
 database = dbm.open("ipa_to_words", "r")
 for metaphoneme in metaphonemes:
-    words.extend(database[metaphoneme].decode('utf-8').split(" "))
+    try:
+        words.extend(database[metaphoneme].decode('utf-8').split(" "))
+    except KeyError:
+        pass
 database.close()
 
 # removing duplicate words (metaphonemes might map to the same word)
@@ -43,5 +47,8 @@ if word_definitions:
     items = [{"title": word, "subtitle": definition, "arg": word} for word, definition in word_definitions]
 else:
     items = [{"title": "no similar words found", "subtitle": "", "arg": incorrectly_spelled_word}]
+
+highlight_correctly_spelled_output(incorrectly_spelled_word, items)
+
 output = {"items": items}
 print(json.dumps(output, ensure_ascii=True))

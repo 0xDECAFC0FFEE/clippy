@@ -38,27 +38,26 @@ while True:
 
             # recieve word. if an empty string is sent, means that the client is closing the connection
             word_to_define = str(connection.recv(MAX_DEF_LEN)).strip()
-            sys.stderr.write("recieved word %s\n" % word_to_define)
+            print("recieved word %s\n" % word_to_define)
 
             if not word_to_define:
                 break
-            
-            # getting definition of word from dictionary app
 
-            word_to_define = word_to_define.encode("utf-8")
+            # getting definition of word from dictionary app
+            word_to_define = word_to_define.encode("utf-8", "ignore") # hopefully no words greater than 200 characters long but hey what do i know
             word_length = (0, len(word_to_define))
 
             # retrieving word from osx dictionary
             dictresult = DCSCopyTextDefinition(
                 None, word_to_define, word_length)
 
-            definition = dictresult.encode('utf-8') if dictresult else "%s not in osx dictionary" % word_to_define
+            definition = dictresult.encode('utf-8') if dictresult else u"%s not in osx dictionary" % word_to_define
 
             # padding definition to MAX_DEF_LEN characters cause alfred can't display more than that anyway probably
             definition = definition[:MAX_DEF_LEN].ljust(MAX_DEF_LEN, " ")
 
             # sending definition to client
-            sys.stderr.write("sending definition %s\n" % definition)
+            print("sending definition %s\n" % definition)
             connection.sendall(definition)
     except Exception as e:
         print(e)

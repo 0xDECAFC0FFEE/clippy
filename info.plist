@@ -12,11 +12,21 @@
 		<array>
 			<dict>
 				<key>destinationuid</key>
+				<string>1D81BBE3-D03A-4794-8873-4C3E2189DE8A</string>
+				<key>modifiers</key>
+				<integer>1048576</integer>
+				<key>modifiersubtext</key>
+				<string>Copy to clipboard</string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+			<dict>
+				<key>destinationuid</key>
 				<string>A259F37F-DAEA-47DA-AA26-8DEB16A2568D</string>
 				<key>modifiers</key>
 				<integer>131072</integer>
 				<key>modifiersubtext</key>
-				<string>open word in dictionary.app</string>
+				<string>Open in dictionary</string>
 				<key>vitoclose</key>
 				<false/>
 			</dict>
@@ -39,9 +49,26 @@
 	<key>disabled</key>
 	<false/>
 	<key>name</key>
-	<string>snippy word suggestion</string>
+	<string>clippy word suggestion</string>
 	<key>objects</key>
 	<array>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>autopaste</key>
+				<false/>
+				<key>clipboardtext</key>
+				<string>{query}</string>
+				<key>transient</key>
+				<false/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.clipboard</string>
+			<key>uid</key>
+			<string>1D81BBE3-D03A-4794-8873-4C3E2189DE8A</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
 		<dict>
 			<key>config</key>
 			<dict>
@@ -87,7 +114,7 @@
 				<key>queuedelaymode</key>
 				<integer>0</integer>
 				<key>queuemode</key>
-				<integer>1</integer>
+				<integer>2</integer>
 				<key>runningsubtext</key>
 				<string></string>
 				<key>script</key>
@@ -99,7 +126,7 @@
 				<key>subtext</key>
 				<string></string>
 				<key>title</key>
-				<string></string>
+				<string>clippy word suggestion</string>
 				<key>type</key>
 				<integer>0</integer>
 				<key>withspace</key>
@@ -134,6 +161,13 @@
 	<string></string>
 	<key>uidata</key>
 	<dict>
+		<key>1D81BBE3-D03A-4794-8873-4C3E2189DE8A</key>
+		<dict>
+			<key>xpos</key>
+			<integer>450</integer>
+			<key>ypos</key>
+			<integer>90</integer>
+		</dict>
 		<key>4CA24EB6-0871-4EF0-B555-470EC331C998</key>
 		<dict>
 			<key>xpos</key>

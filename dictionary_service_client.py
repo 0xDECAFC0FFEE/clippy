@@ -17,11 +17,11 @@ def start_server():
     # starting server
     FNULL = open(os.devnull, 'w')
     cmd = ['/usr/bin/python', "dictionary_service_server.py"]
-    server = subprocess.Popen(
-        cmd, stdout=FNULL, stderr=pipeout, close_fds=False, bufsize=5)
+    server = subprocess.Popen(cmd, stdout=FNULL, stderr=pipeout, 
+        close_fds=False, bufsize=5) # closing stdout as alfred detects running workflows by open stdout.
     
     # client waiting for server to become ready
-    input = os.read(pipein, 6)
+    input = os.read(pipein, 6) # detecting server input from stderr as stdout is closed
 
 def get_definitions(words):
 
@@ -46,10 +46,8 @@ def get_definitions(words):
             definition = sock.recv(MAX_DEF_LEN).strip().decode("utf-8", "ignore") # ignoring decode errors cause the last couple code points could have been truncated
             words_dictionary.append((word, definition))
 
-        # closing connection to server
-        sock.sendall(b" " * MAX_DEF_LEN)
-
     finally:
+        sock.shutdown(socket.SHUT_RDWR)
         sock.close()
 
     return words_dictionary

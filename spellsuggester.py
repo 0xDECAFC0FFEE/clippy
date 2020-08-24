@@ -1,54 +1,104 @@
-from metaphone import doublemetaphone
-from jellyfish import damerau_levenshtein_distance
-from dictionary_service_client import get_definitions
-from config import highlight_correctly_spelled_output
 import json
-from sys import argv
-import dbm
+from sys import argv, stderr
+import urllib.request
+import urllib.parse
+import ssl
+import re
+from typing import List, Tuple, Dict
 
-# input to program from alfred
-if len(argv) == 1:
-    exit(0)
-incorrectly_spelled_word = str(argv[1]).lower()
+"""script that takes input from command line, queries datamuse and prints 
+outputs formatted alfred style
 
-# getting all metaphonemes of word
-metaphonemes = []
-for metaphoneme in doublemetaphone(incorrectly_spelled_word):
-    if metaphoneme != "":
-        metaphonemes.append(metaphoneme)
+inputs are formatted similar to how datamuse handles it
+https://www.datamuse.com/api/
 
-# getting the possible correctly spelled words from the file
-words = []
-database = dbm.open("ipa_to_words", "r")
-for metaphoneme in metaphonemes:
-    try:
-        words.extend(database[metaphoneme].decode('utf-8').split(" "))
-    except KeyError:
-        pass
-database.close()
+example inputs:
 
-# removing duplicate words (metaphonemes might map to the same word)
-words = set(words)
+    sl macha ml tea
+    "sounds like matcha, means like green"
+    => matcha
 
-# sorting correctly spelled words by damerau lexical distance
-words = [(damerau_levenshtein_distance(word.decode('utf-8'), incorrectly_spelled_word.decode('utf-8')), word) for word in words]
-words.sort()
-words = [word for (editdistance, word) in words]
+    sp pipluup
+    "spelled like pipluup"
+    => piplup
 
-# trimming to top 30 entries
-words = words[:30]
+    sl principle lc retired
+    "sounds like principle, left context retired"
+    => principal
 
-# getting definitions:
-word_definitions = get_definitions(words) if words else []
-word_definitions = [(word, definition) for word, definition in word_definitions]
+    rel_syn down sl depresed
+    "synonym to down, sounds like depresed"
+    => depressed
 
-# outputing the definitions in alfred-friendly format
-if word_definitions:
-    items = [{"title": word, "subtitle": definition, "arg": word} for word, definition in word_definitions]
+    
+
+Returns:
+    [type]: [description]
+"""
+
+
+def parse_argv(argv: str) -> Dict[str, str]:
+    """converts argv to dict. 
+    adds default max 4.
+    adds spell as alternate command to sl.
+
+    Args:
+        argv (str): "sl macha ml tea"
+
+    Returns:
+        dict: argv converted into dictionary
+    """
+    if len(argv) == 1:
+        exit(0)
+    inputs = argv[1].split(" ")
+
+    args = dict(zip(inputs[::2], inputs[1::2]))
+    if "spell" in args:
+        args["sl"] = args["spell"]
+        del args["spell"]
+    args["max"] = args.get("max", "4")
+
+    return args
+
+def query_datamuse(api_args: str) -> Tuple[List, List]:
+    """handles api call to datamuse servers
+
+    Args:
+        api_args (dict): args to api call
+
+    Returns:
+        
+    """
+    url = f"https://api.datamuse.com/words?{urllib.parse.urlencode(args)}"
+    incorrectly_spelled_word = str(argv[1]).lower()
+
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+
+    with urllib.request.urlopen(url, context=ctx) as response:
+        response = json.loads(response.read().decode("latin-1"))
+        words = [word["word"] for word in response]
+        defs = [word.get("defs", [""])[0] for word in response]
+
+    return words, defs
+
+def clean_datamuse_def(definition):
+    if definition:
+        return re.sub(r"([^(:?\t)]+)\t(.*)", r"\2", definition)
+    else:
+        return ""
+
+args = parse_argv(argv)
+words, defs = query_datamuse(args)
+defs = [clean_datamuse_def(definition) for definition in defs]
+
+if "sl" in args:
+    titles = [(word if word != args["sl"] else f"⭐ {word}") for word in words]
 else:
-    items = [{"title": "no similar words found", "subtitle": "", "arg": incorrectly_spelled_word}]
+    titles = words
 
-highlight_correctly_spelled_output(incorrectly_spelled_word, items)
+items = [{"title": title, "arg": word, "subtitle": defn} for title, word, defn in zip(titles, words, defs)]
 
 output = {"items": items}
 print(json.dumps(output, ensure_ascii=True))

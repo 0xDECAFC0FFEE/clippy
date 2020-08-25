@@ -1,10 +1,13 @@
 import json
 from sys import argv, stderr
-import urllib.request
+# import urllib.request
 import urllib.parse
 import ssl
 import re
 from typing import List, Tuple, Dict
+import time
+from datamuse_httppool_client import wake_up_server, query_datamuse, wake_up_server
+# import datamuse_httppool_client
 
 """script that takes input from command line, queries datamuse and prints 
 outputs formatted alfred style
@@ -30,12 +33,9 @@ example inputs:
     "synonym to down, sounds like depresed"
     => depressed
 
-    
-
 Returns:
     [type]: [description]
 """
-
 
 def parse_argv(argv: str) -> Dict[str, str]:
     """converts argv to dict. 
@@ -49,6 +49,8 @@ def parse_argv(argv: str) -> Dict[str, str]:
         dict: argv converted into dictionary
     """
     if len(argv) == 1:
+        wake_up_server()
+        # datamuse_httppool_client.connect_to_server(datamuse_httppool_client.server_address)
         exit(0)
     inputs = argv[1].split(" ")
 
@@ -56,32 +58,10 @@ def parse_argv(argv: str) -> Dict[str, str]:
     if "spell" in args:
         args["sl"] = args["spell"]
         del args["spell"]
-    args["max"] = args.get("max", "4")
+    args["max"] = args.get("max", "6")
+    args["md"] = args.get("md", "") + "d"
 
     return args
-
-def query_datamuse(api_args: str) -> Tuple[List, List]:
-    """handles api call to datamuse servers
-
-    Args:
-        api_args (dict): args to api call
-
-    Returns:
-        
-    """
-    url = f"https://api.datamuse.com/words?{urllib.parse.urlencode(args)}"
-    incorrectly_spelled_word = str(argv[1]).lower()
-
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
-
-    with urllib.request.urlopen(url, context=ctx) as response:
-        response = json.loads(response.read().decode("latin-1"))
-        words = [word["word"] for word in response]
-        defs = [word.get("defs", [""])[0] for word in response]
-
-    return words, defs
 
 def clean_datamuse_def(definition):
     if definition:
@@ -89,12 +69,18 @@ def clean_datamuse_def(definition):
     else:
         return ""
 
-args = parse_argv(argv)
-words, defs = query_datamuse(args)
+api_args = parse_argv(argv)
+
+query = urllib.parse.urlencode(api_args)
+
+response = query_datamuse(query)
+response = json.loads(response)
+words = [word["word"] for word in response]
+defs = [word.get("defs", [""])[0] for word in response]
 defs = [clean_datamuse_def(definition) for definition in defs]
 
-if "sl" in args:
-    titles = [(word if word != args["sl"] else f"⭐ {word}") for word in words]
+if "sl" in api_args:
+    titles = [(word if word != api_args["sl"] else f"⭐ {word}") for word in words]
 else:
     titles = words
 
@@ -102,3 +88,5 @@ items = [{"title": title, "arg": word, "subtitle": defn} for title, word, defn i
 
 output = {"items": items}
 print(json.dumps(output, ensure_ascii=True))
+stderr.write(f"finished job {query}")
+stderr.flush()

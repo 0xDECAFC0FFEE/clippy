@@ -6,7 +6,7 @@ import ssl
 import re
 from typing import List, Tuple, Dict
 import time
-from datamuse_httppool_client import wake_up_server, query_datamuse, wake_up_server
+from httppool_client import wake_up_server, query_datamuse
 # import datamuse_httppool_client
 
 """script that takes input from command line, queries datamuse and prints 
@@ -37,7 +37,7 @@ Returns:
     [type]: [description]
 """
 
-def parse_argv(argv: str) -> Dict[str, str]:
+def parse_argv(argv: List[str]) -> Dict[str, str]:
     """converts argv to dict. 
     adds default max 4.
     adds spell as alternate command to sl.
@@ -58,7 +58,7 @@ def parse_argv(argv: str) -> Dict[str, str]:
     if "spell" in args:
         args["sl"] = args["spell"]
         del args["spell"]
-    args["max"] = args.get("max", "6")
+    args["max"] = args.get("max", "10")
     args["md"] = args.get("md", "") + "d"
 
     return args
@@ -71,16 +71,21 @@ def clean_datamuse_def(definition):
 
 api_args = parse_argv(argv)
 
-query = urllib.parse.urlencode(api_args)
-
-response = query_datamuse(query)
-response = json.loads(response)
+query = urllib.parse.urlencode(api_args).lower()
+response: List[dict] = json.loads(query_datamuse(query))
+response = [word for word in response if "defs" in word][:6]
 words = [word["word"] for word in response]
 defs = [word.get("defs", [""])[0] for word in response]
 defs = [clean_datamuse_def(definition) for definition in defs]
 
 if "sl" in api_args:
-    titles = [(word if word != api_args["sl"] else f"⭐ {word}") for word in words]
+    if api_args["sl"].title() == api_args["sl"]:
+        words = [word.title() for word in words]
+    titles = [(word if word.lower() != api_args["sl"].lower() else f"⭐ {word}") for word in words]
+elif "sp" in api_args:
+    if api_args["sp"].title() == api_args["sp"]:
+        words = [word.title() for word in words]
+    titles = [(word if word.lower() != api_args["sp"].lower() else f"⭐ {word}") for word in words]
 else:
     titles = words
 
@@ -88,5 +93,3 @@ items = [{"title": title, "arg": word, "subtitle": defn} for title, word, defn i
 
 output = {"items": items}
 print(json.dumps(output, ensure_ascii=True))
-stderr.write(f"finished job {query}")
-stderr.flush()

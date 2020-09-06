@@ -1,31 +1,54 @@
 import os
 import signal
 import threading
+from typing import Callable
 
 # stolen from https://stackoverflow.com/questions/29604205/make-python-script-exit-after-x-seconds-of-inactivity
 
+def kill():
+    """
+    kills the process
+    """
+    os.kill(os.getpid(), signal.SIGTERM)
+
 class Watchdog():
-    def __init__(self, timeout=10):
+        
+    def __init__(self, timeout: float, on_alarm: Callable = kill, *args, **kwargs):
+        """class that automatically runs function on_alarm(*args, **kwargs) after timeout seconds
+
+        requires calling start() to start the watchdog
+
+        Args:
+            timeout (int): seconds to exit. Defaults to 10.
+            on_alarm ([type], optional): function to call on exit. Defaults to killing the process.
+        """
         self.timeout = timeout
-        self._t = None
-
-    def do_expire(self):
-        os.kill(os.getpid(), signal.SIGTERM)
-
-    def _expire(self):
-        self.do_expire()
+        self.timer = None
+        self.on_alarm = lambda: on_alarm(*args, **kwargs)
 
     def start(self):
-        if self._t is None:
-            self._t = threading.Timer(self.timeout, self._expire)
-            self._t.start()
+        """
+        start the watchdog.z
+        starting the watchdog several times does not reset the timer.
+        call refresh() to reset the timer.
+        
+        """
+        if self.timer is None:
+            self.timer = threading.Timer(self.timeout, self.on_alarm)
+            self.timer.start()
 
     def stop(self):
-        if self._t is not None:
-            self._t.cancel()
-            self._t = None
+        """
+        stop the watchdog.
+        """
+        if self.timer is not None:
+            self.timer.cancel()
+            self.timer = None
 
     def refresh(self):
-        if self._t is not None:
+        """
+        reset watchdog timer
+        """
+        if self.timer is not None:
              self.stop()
              self.start()
